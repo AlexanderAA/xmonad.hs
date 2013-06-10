@@ -1,17 +1,20 @@
 import XMonad
-import Data.Monoid
+--import Data.Monoid
 import System.Exit
 import XMonad.Hooks.ManageDocks
 import qualified XMonad.StackSet as W
 import qualified Data.Map        as M
 
 import XMonad.Layout.IndependentScreens
-
+import qualified XMonad.Actions.FlexibleResize as Flex
+import XMonad.Layout.Tabbed
 -- The preferred terminal program, which is used in a binding below and by
 -- certain contrib modules.
 --
 -- myTerminal      = "gnome-terminal"
-myTerminal = "xterm -fa \"Ubuntu Mono:antialias=true:hinting=true:hintstyle=hintfull:pixelsize=16\" +cjk_width"
+--myTerminal = "xterm -fa \"Liberation Mono:antialias=true:hinting=true:hintstyle=hintfull:pixelsize=13\" +cjk_width"
+myTerminal = "xterm -fa \"Fixed:pixelsize=14\" +cjk_width"
+--myTerminal = "xterm -fa \"Ubuntu Mono:antialias=true:hinting=true:hintstyle=hintfull:pixelsize=16\" +cjk_width"
 
 -- Whether focus follows the mouse pointer.
 myFocusFollowsMouse :: Bool
@@ -58,10 +61,13 @@ myConfig = defaultConfig { workspaces = withScreens 2 myWorkspaces }
 -- Border colors for unfocused and focused windows, respectively.
 --
 --myNormalBorderColor  = "#003355"
-myNormalBorderColor  = "#333333"
+--myNormalBorderColor  = "#073642"
 --myNormalBorderColor  = "#B2BDC4"
-myFocusedBorderColor = "#ff7700"
+myNormalBorderColor  = "#cccccc"
+
 --myFocusedBorderColor = "#ff9900"
+--myFocusedBorderColor = "#ff9900"
+myFocusedBorderColor = "#000000"
 
 
 -------------------------------------------
@@ -99,6 +105,7 @@ myKeys conf@(XConfig {XMonad.modMask = modm}) = M.fromList $
     -- Move focus to the next window
     , ((modm,               xK_Tab   ), windows W.focusDown)
 
+    -- Move focus to the next window
     -- Move focus to the next window
     , ((modm,               xK_j     ), windows W.focusDown)
 
@@ -196,7 +203,7 @@ myMouseBindings (XConfig {XMonad.modMask = modm}) = M.fromList $
 -- which denotes layout choice.
 --
 -- myLayout = tiled ||| Mirror tiled ||| Full
-myLayout = avoidStruts(tiled ||| Mirror tiled ||| Full)
+myLayout = avoidStruts(tiled ||| Mirror tiled ||| Full ||| simpleTabbed)
   where
      -- default tiling algorithm partitions the screen into two panes
      tiled   = Tall nmaster delta ratio
@@ -292,4 +299,4 @@ main = do
         manageHook         = myManageHook,
         keys               = myKeys,
         mouseBindings      = myMouseBindings
-} 
+    }
