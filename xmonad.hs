@@ -1,91 +1,42 @@
 import XMonad
---import Data.Monoid
+import Data.Monoid
 import System.Exit
-import XMonad.Hooks.ManageDocks
 import qualified XMonad.StackSet as W
 import qualified Data.Map        as M
 
-import XMonad.Layout.IndependentScreens
-import qualified XMonad.Actions.FlexibleResize as Flex
-import XMonad.Layout.Tabbed
 -- The preferred terminal program, which is used in a binding below and by
 -- certain contrib modules.
 --
--- myTerminal      = "gnome-terminal"
---myTerminal = "xterm -fa \"Liberation Mono:antialias=true:hinting=true:hintstyle=hintfull:pixelsize=13\" +cjk_width"
-myTerminal = "xterm -fa \"Fixed:pixelsize=14\" +cjk_width"
---myTerminal = "xterm -fa \"Ubuntu Mono:antialias=true:hinting=true:hintstyle=hintfull:pixelsize=16\" +cjk_width"
-
--- Whether focus follows the mouse pointer.
-myFocusFollowsMouse :: Bool
+myTerminal = "uxterm"
 myFocusFollowsMouse = False
 
 -- Width of the window border in pixels.
 --
 myBorderWidth   = 1
-
--- modMask lets you specify which modkey you want to use. The default
--- is mod1Mask ("left alt").  You may also consider using mod3Mask
--- ("right alt"), which does not conflict with emacs keybindings. The
--- "windows key" is usually mod4Mask.
---
 myModMask       = mod4Mask
-
--- The mask for the numlock key. Numlock status is "masked" from the
--- current modifier status, so the keybindings will work with numlock on or
--- off. You may need to change this on some systems.
---
--- You can find the numlock modifier by running "xmodmap" and looking for a
--- modifier with Num_Lock bound to it:
---
--- > $ xmodmap | grep Num
--- > mod2        Num_Lock (0x4d)
---
--- Set numlockMask = 0 if you don't have a numlock key, or want to treat
--- numlock status separately.
---
 myNumlockMask   = mod2Mask
-
--- The default number of workspaces (virtual screens) and their names.
--- By default we use numeric strings, but any string may be used as a
--- workspace name. The number of workspaces is determined by the length
--- of this list.
---
--- A tagging example:
---
--- > workspaces = ["web", "irc", "code" ] ++ map show [4..9]
---
 myWorkspaces    = ["1","2","3","4","5","6","7","8","9","0"]
 
-myConfig = defaultConfig { workspaces = withScreens 2 myWorkspaces }
 -- Border colors for unfocused and focused windows, respectively.
 --
---myNormalBorderColor  = "#003355"
---myNormalBorderColor  = "#073642"
---myNormalBorderColor  = "#B2BDC4"
-myNormalBorderColor  = "#cccccc"
+--myNormalBorderColor  = "#555555"
+myNormalBorderColor  = "#aaaaaa"
+--myFocusedBorderColor = "#ff5500"
+myFocusedBorderColor = "#ff0000"
 
---myFocusedBorderColor = "#ff9900"
---myFocusedBorderColor = "#ff9900"
-myFocusedBorderColor = "#000000"
-
-
--------------------------------------------
+------------------------------------------------------------------------
 -- Key bindings. Add, modify or remove key bindings here.
 --
 myKeys conf@(XConfig {XMonad.modMask = modm}) = M.fromList $
 
     -- launch a terminal
-    -- [ ((modm .|. shiftMask, xK_Return), spawn $ XMonad.terminal conf)
-    [ ((modm,               xK_x     ), spawn $ XMonad.terminal conf)
-    , ((modm .|. shiftMask,xK_Return ), spawn $ XMonad.terminal conf)
-    , ((modm,                   xK_z ), spawn $ XMonad.terminal conf)
-
+    [ ((modm .|. shiftMask, xK_Return), spawn $ XMonad.terminal conf)
+    , ((modm, xK_z), spawn $ XMonad.terminal conf)
     -- launch dmenu
-    , ((modm,               xK_p     ), spawn "exe=`dmenu_path | dmenu` && eval \"exec $exe\"")
-    , ((modm,               xK_a     ), spawn "exe=`dmenu_path | dmenu` && eval \"exec $exe\"")
-    
-    , ((0,               xK_Menu  ), spawn "exe=`/home/a/.xmonad/change_layout.sh`")
+    , ((modm,               xK_p     ), spawn "exe=`dmenu_run` && eval \"exec $exe\"")
+    , ((modm,               xK_a     ), spawn "exe=`dmenu_run` && eval \"exec $exe\"")
+
+    , ((0,                  xK_Menu  ), spawn "exe=`/home/a/.xmonad/change_layout.sh`")
 
     -- launch gmrun
     , ((modm .|. shiftMask, xK_p     ), spawn "gmrun")
@@ -105,7 +56,6 @@ myKeys conf@(XConfig {XMonad.modMask = modm}) = M.fromList $
     -- Move focus to the next window
     , ((modm,               xK_Tab   ), windows W.focusDown)
 
-    -- Move focus to the next window
     -- Move focus to the next window
     , ((modm,               xK_j     ), windows W.focusDown)
 
@@ -147,7 +97,6 @@ myKeys conf@(XConfig {XMonad.modMask = modm}) = M.fromList $
 
     -- Quit xmonad
     , ((modm .|. shiftMask, xK_q     ), io (exitWith ExitSuccess))
-    -- , ((modm .|. shiftMask, xK_q     ), spawn "gnome-session-save --kill")
 
     -- Restart xmonad
     , ((modm              , xK_Delete     ), spawn "xmonad --recompile; xmonad --restart")
@@ -158,8 +107,8 @@ myKeys conf@(XConfig {XMonad.modMask = modm}) = M.fromList $
     -- mod-[1..9], Switch to workspace N
     -- mod-shift-[1..9], Move client to workspace N
     --
-    [((m .|. modm, k), windows $ onCurrentScreen f i)
-        | (i, k) <- zip (workspaces' conf) ([xK_1 .. xK_9] ++ [xK_0])
+    [((m .|. modm, k), windows $ f i)
+        | (i, k) <- zip (XMonad.workspaces conf) ([xK_1 .. xK_9] ++ [xK_0])
         , (f, m) <- [(W.greedyView, 0), (W.shift, shiftMask)]]
     ++
 
@@ -168,7 +117,7 @@ myKeys conf@(XConfig {XMonad.modMask = modm}) = M.fromList $
     -- mod-shift-{w,e,r}, Move client to screen 1, 2, or 3
     --
     [((m .|. modm, key), screenWorkspace sc >>= flip whenJust (windows . f))
-        | (key, sc) <- zip [xK_F1, xK_F2] [0..]
+        | (key, sc) <- zip [xK_w, xK_e, xK_r] [0..]
         , (f, m) <- [(W.view, 0), (W.shift, shiftMask)]]
 
 
@@ -202,8 +151,7 @@ myMouseBindings (XConfig {XMonad.modMask = modm}) = M.fromList $
 -- The available layouts.  Note that each layout is separated by |||,
 -- which denotes layout choice.
 --
--- myLayout = tiled ||| Mirror tiled ||| Full
-myLayout = avoidStruts(tiled ||| Mirror tiled ||| Full ||| simpleTabbed)
+myLayout = tiled ||| Mirror tiled ||| Full
   where
      -- default tiling algorithm partitions the screen into two panes
      tiled   = Tall nmaster delta ratio
@@ -215,7 +163,7 @@ myLayout = avoidStruts(tiled ||| Mirror tiled ||| Full ||| simpleTabbed)
      ratio   = 1/2
 
      -- Percent of screen to increment by when resizing panes
-     delta   = 7/100
+     delta   = 3/100
 
 ------------------------------------------------------------------------
 -- Window rules:
@@ -232,18 +180,11 @@ myLayout = avoidStruts(tiled ||| Mirror tiled ||| Full ||| simpleTabbed)
 -- To match on the WM_NAME, you can use 'title' in the same way that
 -- 'className' and 'resource' are used below.
 --
---myManageHook = composeAll
---    [ className =? "MPlayer"        --> doFloat
---    , className =? "Gimp"           --> doFloat
---    , resource  =? "desktop_window" --> doIgnore
---    , resource  =? "kdesktop"       --> doIgnore ]
-
-stockManageHook =  composeAll
+myManageHook = composeAll
     [ className =? "MPlayer"        --> doFloat
     , className =? "Gimp"           --> doFloat
-    , resource  =? "desktop_window" --> doIgnore
+--    , resource  =? "desktop_window" --> doIgnore
     , resource  =? "kdesktop"       --> doIgnore ]
-myManageHook =  manageDocks <+> stockManageHook
 
 ------------------------------------------------------------------------
 -- Event handling
@@ -288,15 +229,24 @@ myManageHook =  manageDocks <+> stockManageHook
 main = do 
     xmonad $ defaultConfig {
 
+      -- simple stuff
         terminal           = myTerminal,
         focusFollowsMouse  = myFocusFollowsMouse,
         borderWidth        = myBorderWidth,
         modMask            = myModMask,
-        --numlockMask        = myNumlockMask,
-        workspaces         = withScreens 2 myWorkspaces,
+--        numlockMask        = myNumlockMask,
+        workspaces         = myWorkspaces,
         normalBorderColor  = myNormalBorderColor,
         focusedBorderColor = myFocusedBorderColor,
-        manageHook         = myManageHook,
-        keys               = myKeys,
-        mouseBindings      = myMouseBindings
+
+      -- key bindings
+         keys               = myKeys,
+         mouseBindings      = myMouseBindings 
+--,
+      -- hooks, layouts
+--         layoutHook         = myLayout,
+--         manageHook         = myManageHook
+--         handleEventHook    = myEventHook,
+--         logHook            = myLogHook,
+--         startupHook        = myStartupHook   
     }
